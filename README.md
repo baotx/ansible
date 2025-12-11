@@ -33,7 +33,6 @@ Automated setup for development environment including zsh, dotfiles, Docker, Nod
   - Rust (via rustup)
   - Docker with Docker Compose
 - **CLI Tools**: fzf, fd-find
-- **Repositories**: BorderWise projects (Web, WebWatcher, UserManagement, DevTools)
 
 ## Run Specific Tasks
 
@@ -43,5 +42,4 @@ Use tags to run only specific installations:
 ansible-playbook ./local.yml --ask-vault-pass --ask-become-pass --tags "zsh"
 ansible-playbook ./local.yml --ask-vault-pass --ask-become-pass --tags "docker"
 ansible-playbook ./local.yml --ask-vault-pass --ask-become-pass --tags "go,rust"
-ansible-playbook ./local.yml --ask-vault-pass --ask-become-pass --tags "borderwise"
 ```
