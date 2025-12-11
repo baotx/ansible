@@ -1,0 +1,34 @@
+- name: Install NVM dependencies
+  apt:
+    name:
+      - curl
+      - build-essential
+      - libssl-dev
+    state: present
+  tags: &tags_for_nvm_tasks [ 'install', 'nvm', 'node' ]
+
+- name: Check if NVM is already installed
+  stat:
+    path: "{{ lookup('env', 'HOME') }}/.nvm"
+  register: nvm_stats
+  tags: *tags_for_nvm_tasks
+
+- name: Install NVM
+  shell: >
+    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+  args:
+    creates: "{{ lookup('env', 'HOME') }}/.nvm/nvm.sh"
+  when: nvm_stats.stat.exists == False
+  become: false
+  tags: *tags_for_nvm_tasks
+
+- name: Install Node.js LTS via NVM
+  shell: |
+    export NVM_DIR="$HOME/.nvm"
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+    nvm install --lts
+    nvm use --lts
+  args:
+    executable: /bin/bash
+  become: false
+  tags: *tags_for_nvm_tasks

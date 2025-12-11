@@ -1,23 +1,46 @@
 - name: Installing stow
   apt: name=stow
+  become: true
+  tags:
+    - install
+    - dotfiles
+    - stow
+- name: Check if .dotfiles directory exists
+  stat:
+    path: "{{ lookup('env', 'HOME') }}/.dotfiles"
+  register: dotfiles_dir
+  tags:
+    - install
+    - dotfiles
+    - stow
+- name: Fix .dotfiles ownership if it exists
+  file:
+    path: "{{ lookup('env', 'HOME') }}/.dotfiles"
+    owner: "{{ lookup('env', 'USER') }}"
+    group: "{{ lookup('env', 'USER') }}"
+    recurse: yes
+  become: true
+  when: dotfiles_dir.stat.exists
   tags:
     - install
     - dotfiles
     - stow
 - name: Cloning .dotfiles
   ansible.builtin.git:
-    repo: 'git@github.com:tongxuanbao/.dotfiles.git'
+    repo: 'https://github.com/tongxuanbao/.dotfiles.git'
     dest: "{{ lookup('env', 'HOME') }}/.dotfiles"
     recursive: yes
     update: yes
     accept_hostkey: yes
     version: master
+  become: false
   tags:
     - install
     - dotfiles
     - stow
 - name: Stow dotfiles
   shell: cd $HOME/.dotfiles && ./ubuntu
+  become: false
   tags:
     - install
     - dotfiles
