@@ -1,9 +1,11 @@
 - hosts: localhost
   become: true
   tasks: 
-    - import_tasks: tasks/zsh-setup.yml
     - import_tasks: tasks/dotfiles.yml
+    - import_tasks: tasks/zsh-setup.yml
     - import_tasks: tasks/nvm-setup.yml
     - import_tasks: tasks/docker-setup.yml
     - import_tasks: tasks/go-setup.yml
     - import_tasks: tasks/rust-setup.yml
+    - import_tasks: tasks/cli-tools-setup.yml
+    - import_tasks: tasks/borderwise-setup.yml

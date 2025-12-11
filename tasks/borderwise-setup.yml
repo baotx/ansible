@@ -1,0 +1,35 @@
+- name: Clone BorderWise.Web repository
+  ansible.builtin.git:
+    repo: 'https://github.com/WiseTechGlobal/BorderWise.Web'
+    dest: "{{ lookup('env', 'HOME') }}/BorderWise.Web/BorderWise.Web"
+    update: yes
+    accept_hostkey: yes
+  become: false
+  tags: &tags_for_borderwise_tasks [ 'install', 'borderwise', 'repositories' ]
+
+- name: Clone BorderWise.WebWatcher repository
+  ansible.builtin.git:
+    repo: 'https://github.com/WiseTechGlobal/BorderWise.WebWatcher'
+    dest: "{{ lookup('env', 'HOME') }}/BorderWise.WebWatcher/BorderWise.WebWatcher"
+    update: yes
+    accept_hostkey: yes
+  become: false
+  tags: *tags_for_borderwise_tasks
+
+- name: Clone BorderWise.UserManagement repository
+  ansible.builtin.git:
+    repo: 'https://github.com/WiseTechGlobal/BorderWise.UserManagement'
+    dest: "{{ lookup('env', 'HOME') }}/BorderWise.UserManagement/BorderWise.UserManagement"
+    update: yes
+    accept_hostkey: yes
+  become: false
+  tags: *tags_for_borderwise_tasks
+
+- name: Clone BorderWise.DevTools repository
+  ansible.builtin.git:
+    repo: 'https://github.com/WiseTechGlobal/BorderWise.DevTools'
+    dest: "{{ lookup('env', 'HOME') }}/BorderWise.DevTools/BorderWise.DevTools"
+    update: yes
+    accept_hostkey: yes
+  become: false
+  tags: *tags_for_borderwise_tasks

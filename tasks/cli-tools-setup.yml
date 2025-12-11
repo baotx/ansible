@@ -1,0 +1,11 @@
+- name: Install fzf
+  apt:
+    name: fzf
+    state: present
+  tags: &tags_for_cli_tools_tasks [ 'install', 'cli-tools', 'fzf', 'productivity' ]
+
+- name: Install fd-find
+  apt:
+    name: fd-find
+    state: present
+  tags: *tags_for_cli_tools_tasks

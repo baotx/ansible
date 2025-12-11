@@ -25,3 +25,11 @@
     dest: "{{ lookup('env', 'HOME') }}/.oh-my-zsh/plugins/zsh-autosuggestions"
   become: false
   tags: *tags_for_zsh_tasks
+
+- name: Install powerlevel10k theme
+  ansible.builtin.git:
+    repo: 'https://github.com/romkatv/powerlevel10k.git'
+    dest: "{{ lookup('env', 'HOME') }}/.oh-my-zsh/custom/themes/powerlevel10k"
+    depth: 1
+  become: false
+  tags: *tags_for_zsh_tasks
