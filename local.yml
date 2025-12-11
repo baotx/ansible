@@ -13,4 +13,3 @@
     - import_tasks: tasks/go-setup.yml
     - import_tasks: tasks/rust-setup.yml
     - import_tasks: tasks/cli-tools-setup.yml
-    - import_tasks: tasks/borderwise-setup.yml
