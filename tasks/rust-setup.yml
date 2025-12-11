@@ -1,0 +1,42 @@
+- name: Install Rust dependencies
+  apt:
+    name:
+      - curl
+      - build-essential
+      - gcc
+      - make
+    state: present
+  tags: &tags_for_rust_tasks [ 'install', 'rust', 'cargo' ]
+
+- name: Check if Rust is already installed
+  stat:
+    path: "{{ lookup('env', 'HOME') }}/.cargo"
+  register: rust_stats
+  tags: *tags_for_rust_tasks
+
+- name: Install Rust via rustup
+  shell: |
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+  args:
+    creates: "{{ lookup('env', 'HOME') }}/.cargo/bin/rustc"
+  when: rust_stats.stat.exists == False
+  become: false
+  tags: *tags_for_rust_tasks
+
+- name: Update Rust to latest version
+  shell: |
+    export PATH="$HOME/.cargo/bin:$PATH"
+    rustup update stable
+  args:
+    executable: /bin/bash
+  become: false
+  tags: *tags_for_rust_tasks
+
+- name: Set Rust stable as default
+  shell: |
+    export PATH="$HOME/.cargo/bin:$PATH"
+    rustup default stable
+  args:
+    executable: /bin/bash
+  become: false
+  tags: *tags_for_rust_tasks

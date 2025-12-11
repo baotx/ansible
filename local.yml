@@ -5,3 +5,5 @@
     - import_tasks: tasks/dotfiles.yml
     - import_tasks: tasks/nvm-setup.yml
     - import_tasks: tasks/docker-setup.yml
+    - import_tasks: tasks/go-setup.yml
+    - import_tasks: tasks/rust-setup.yml

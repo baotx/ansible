@@ -1,0 +1,47 @@
+- name: Install Go dependencies
+  apt:
+    name:
+      - wget
+      - tar
+    state: present
+  tags: &tags_for_go_tasks [ 'install', 'go', 'golang' ]
+
+- name: Check if Go is already installed
+  stat:
+    path: /usr/local/go
+  register: go_stats
+  tags: *tags_for_go_tasks
+
+- name: Get latest Go version
+  shell: |
+    curl -s https://go.dev/VERSION?m=text | head -n 1
+  register: go_version_output
+  when: go_stats.stat.exists == False
+  tags: *tags_for_go_tasks
+
+- name: Download and install latest Go
+  shell: |
+    GO_VERSION="{{ go_version_output.stdout }}"
+    wget -q https://go.dev/dl/${GO_VERSION}.linux-amd64.tar.gz -O /tmp/go.tar.gz
+    rm -rf /usr/local/go
+    tar -C /usr/local -xzf /tmp/go.tar.gz
+    rm /tmp/go.tar.gz
+  args:
+    creates: /usr/local/go/bin/go
+  when: go_stats.stat.exists == False
+  tags: *tags_for_go_tasks
+
+- name: Add Go to PATH in /etc/environment
+  lineinfile:
+    path: /etc/environment
+    regexp: '^PATH='
+    line: 'PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/usr/local/go/bin"'
+    state: present
+  tags: *tags_for_go_tasks
+
+- name: Add GOPATH to /etc/environment
+  lineinfile:
+    path: /etc/environment
+    line: 'GOPATH="{{ lookup("env", "HOME") }}/go"'
+    state: present
+  tags: *tags_for_go_tasks
