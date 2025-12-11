@@ -2,12 +2,19 @@
   become: true
   vars:
     ssh_keys:
-      - { source: "./.ssh/id_rsa", dest: "{{ lookup('env', 'HOME') }}/.ssh/id_rsa" }
-      - { source: "./.ssh/id_ed25519", dest: "{{ lookup('env', 'HOME') }}/.ssh/id_ed25519" }
-  tasks: 
+      - {
+          source: "./.ssh/id_rsa",
+          dest: "{{ lookup('env', 'HOME') }}/.ssh/id_rsa",
+        }
+      - {
+          source: "./.ssh/id_ed25519",
+          dest: "{{ lookup('env', 'HOME') }}/.ssh/id_ed25519",
+        }
+  tasks:
     - import_tasks: tasks/ssh.yml
     - import_tasks: tasks/zsh-setup.yml
     - import_tasks: tasks/dotfiles.yml
+    - import_tasks: tasks/git-setup.yml
     - import_tasks: tasks/nvm-setup.yml
     - import_tasks: tasks/docker-setup.yml
     - import_tasks: tasks/go-setup.yml

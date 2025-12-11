@@ -1,0 +1,15 @@
+- name: Configure global git email
+  ansible.builtin.git_config:
+    name: user.email
+    scope: global
+    value: "baotongxuan@gmail.com"
+  become: false
+  tags: &git_setup_tags ["git", "productivity", "dotfiles"]
+
+- name: Configure global git name
+  ansible.builtin.git_config:
+    name: user.name
+    scope: global
+    value: "Ryan Tong"
+  become: false
+  tags: *git_setup_tags
