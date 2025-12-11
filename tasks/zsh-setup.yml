@@ -1,10 +1,24 @@
 - name: Install ZSH
   apt: name=zsh
+  become: true
   tags: &tags_for_zsh_tasks [ 'install', 'productivity', 'dotfiles', 'zsh' ]
 
-- name: Change shell to zsh
+- name: Gather passwd entries
+  ansible.builtin.getent:
+    database: passwd
   become: true
-  shell: chsh -s $(which zsh)
+  tags: *tags_for_zsh_tasks
+
+- name: Set zsh for existing users
+  ansible.builtin.user:
+    name: "{{ item.key }}"
+    shell: /usr/bin/zsh
+  loop: "{{ getent_passwd | dict2items }}"
+  when:
+    - (item.value[1] | int) >= 1000        # skip system users
+    - item.value[5] not in ['/usr/sbin/nologin', '/bin/false']
+    - item.value[5] != '/usr/bin/zsh'
+  become: true
   tags: *tags_for_zsh_tasks
 
 - name: Check that .oh-my-zsh exists
