@@ -1,0 +1,101 @@
+- name: Ensure .ssh directory exists.
+  file:
+    dest: "{{ lookup('env', 'HOME') }}/.ssh"
+    mode: 0700
+    state: directory
+  become: false
+  tags:
+    - dotfiles
+    - install
+    - ssh
+
+- name: Install ssh private keys (with decryption)
+  copy:
+    src: "{{ item.source }}"
+    dest: "{{ item.dest }}"
+    mode: 0600
+    decrypt: yes
+  become: false
+  loop: "{{ ssh_keys }}"
+  tags:
+    - dotfiles
+    - install
+    - ssh
+
+- name: Install ssh public keys
+  copy:
+    src: "{{ item.source }}.pub"
+    dest: "{{ item.dest }}.pub"
+    mode: 0644
+    decrypt: yes
+  become: false
+  loop: "{{ ssh_keys }}"
+  tags:
+    - dotfiles
+    - install
+    - ssh
+
+- name: Set authorized keys from all public keys
+  authorized_key:
+    user: "{{ lookup('env', 'USER') }}"
+    state: present
+    key: "{{ lookup('file', item) }}"
+  become: false
+  with_fileglob:
+    - "{{ lookup('env', 'HOME') }}/.ssh/*.pub"
+  tags:
+    - dotfiles
+    - install
+    - ssh
+
+- name: Check if ssh-agent is running
+  shell: pgrep -u {{ lookup('env', 'USER') }} ssh-agent
+  register: ssh_agent_running
+  changed_when: false
+  failed_when: false
+  become: false
+  tags:
+    - dotfiles
+    - install
+    - ssh
+
+- name: Start ssh-agent and add keys to shell profile
+  blockinfile:
+    path: "{{ lookup('env', 'HOME') }}/.zshrc"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - SSH AGENT"
+    block: |
+      # Start ssh-agent automatically
+      if [ -z "$SSH_AUTH_SOCK" ]; then
+         eval "$(ssh-agent -s)" > /dev/null
+         ssh-add ~/.ssh/id_ed25519 2>/dev/null || ssh-add ~/.ssh/id_rsa 2>/dev/null
+      fi
+    create: yes
+  become: false
+  tags:
+    - dotfiles
+    - install
+    - ssh
+
+- name: Start ssh-agent for current session
+  shell: eval "$(ssh-agent -s)" && echo "$SSH_AUTH_SOCK" > /tmp/ssh_auth_sock_{{ lookup('env', 'USER') }}
+  become: false
+  when: ssh_agent_running.rc != 0
+  tags:
+    - dotfiles
+    - install
+    - ssh
+
+- name: Add SSH keys to ssh-agent
+  shell: |
+    if [ -n "$SSH_AUTH_SOCK" ]; then
+      ssh-add {{ item.dest }} 2>/dev/null || true
+    elif [ -f /tmp/ssh_auth_sock_{{ lookup('env', 'USER') }} ]; then
+      export SSH_AUTH_SOCK=$(cat /tmp/ssh_auth_sock_{{ lookup('env', 'USER') }})
+      ssh-add {{ item.dest }} 2>/dev/null || true
+    fi
+  become: false
+  loop: "{{ ssh_keys }}"
+  tags:
+    - dotfiles
+    - install
+    - ssh

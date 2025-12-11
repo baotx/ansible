@@ -19,9 +19,9 @@ Automated setup for development environment including zsh, dotfiles, Docker, Nod
 
 3. **Run the playbook:**
    ```bash
-   ansible-playbook ./local.yml --ask-become-pass
+   ansible-playbook ./local.yml --ask-vault-pass --ask-become-pass
    ```
-   Enter your sudo password when prompted.
+   Enter your vault password and sudo password when prompted.
 
 ## What Gets Installed
 
@@ -40,8 +40,8 @@ Automated setup for development environment including zsh, dotfiles, Docker, Nod
 Use tags to run only specific installations:
 
 ```bash
-ansible-playbook ./local.yml --ask-become-pass --tags "zsh"
-ansible-playbook ./local.yml --ask-become-pass --tags "docker"
-ansible-playbook ./local.yml --ask-become-pass --tags "go,rust"
-ansible-playbook ./local.yml --ask-become-pass --tags "borderwise"
+ansible-playbook ./local.yml --ask-vault-pass --ask-become-pass --tags "zsh"
+ansible-playbook ./local.yml --ask-vault-pass --ask-become-pass --tags "docker"
+ansible-playbook ./local.yml --ask-vault-pass --ask-become-pass --tags "go,rust"
+ansible-playbook ./local.yml --ask-vault-pass --ask-become-pass --tags "borderwise"
 ```
