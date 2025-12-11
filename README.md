@@ -6,7 +6,7 @@ Automated setup for development environment including zsh, dotfiles, Docker, Nod
 
 1. **Clone this repository:**
    ```bash
-   git clone https://github.com/yourusername/ansible.git
+   git clone https://github.com/baotx/ansible.git
    cd ansible
    ```
 
