@@ -35,66 +35,85 @@
     - install
     - ssh
 
-- name: Set authorized keys from all public keys
-  authorized_key:
-    user: "{{ lookup('env', 'USER') }}"
-    state: present
-    key: "{{ lookup('file', item) }}"
-  become: false
-  with_fileglob:
-    - "{{ lookup('env', 'HOME') }}/.ssh/*.pub"
+- name: Gather passwd entries for SSH key propagation
+  ansible.builtin.getent:
+    database: passwd
+  become: true
   tags:
     - dotfiles
     - install
     - ssh
 
-- name: Check if ssh-agent is running
-  shell: pgrep -u {{ lookup('env', 'USER') }} ssh-agent
-  register: ssh_agent_running
+- name: Collect local public keys
+  ansible.builtin.set_fact:
+    local_public_keys: "{{ lookup('fileglob', lookup('env', 'HOME') + '/.ssh/*.pub', wantlist=True) }}"
+  tags:
+    - dotfiles
+    - install
+    - ssh
+
+- name: Build list of eligible users for SSH keys
+  ansible.builtin.set_fact:
+    eligible_users: "{{ (eligible_users | default([])) + [ item ] }}"
+  loop: "{{ getent_passwd | dict2items }}"
+  when:
+    - (item.value[1] | int) >= 1000
+    - item.value[5] not in ['/usr/sbin/nologin', '/bin/false']
+  tags:
+    - dotfiles
+    - install
+    - ssh
+
+- name: Ensure per-user .ssh directories exist
+  ansible.builtin.file:
+    path: "{{ item.value[4] }}/.ssh"
+    state: directory
+    mode: '0700'
+    owner: "{{ item.key }}"
+    group: "{{ item.key }}"
+  loop: "{{ eligible_users | default([]) }}"
+  become: true
+  when: (eligible_users | default([])) | length > 0
+  tags:
+    - dotfiles
+    - install
+    - ssh
+
+- name: Fetch GitHub host key
+  ansible.builtin.command: ssh-keyscan -H github.com
+  register: github_known_host
   changed_when: false
-  failed_when: false
-  become: false
   tags:
     - dotfiles
     - install
     - ssh
 
-- name: Start ssh-agent and add keys to shell profile
-  blockinfile:
-    path: "{{ lookup('env', 'HOME') }}/.zshrc"
-    marker: "# {mark} ANSIBLE MANAGED BLOCK - SSH AGENT"
-    block: |
-      # Start ssh-agent automatically
-      if [ -z "$SSH_AUTH_SOCK" ]; then
-         eval "$(ssh-agent -s)" > /dev/null
-         ssh-add ~/.ssh/id_ed25519 2>/dev/null || ssh-add ~/.ssh/id_rsa 2>/dev/null
-      fi
-    create: yes
-  become: false
+- name: Add GitHub to known_hosts for all users
+  ansible.builtin.known_hosts:
+    path: "{{ item.value[4] }}/.ssh/known_hosts"
+    name: github.com
+    key: "{{ github_known_host.stdout }}"
+    state: present
+  loop: "{{ eligible_users | default([]) }}"
+  become: true
+  when:
+    - (eligible_users | default([])) | length > 0
+    - github_known_host.stdout is defined
   tags:
     - dotfiles
     - install
     - ssh
 
-- name: Start ssh-agent for current session
-  shell: eval "$(ssh-agent -s)" && echo "$SSH_AUTH_SOCK" > /tmp/ssh_auth_sock_{{ lookup('env', 'USER') }}
-  become: false
-  when: ssh_agent_running.rc != 0
-  tags:
-    - dotfiles
-    - install
-    - ssh
-
-- name: Add SSH keys to ssh-agent
-  shell: |
-    if [ -n "$SSH_AUTH_SOCK" ]; then
-      ssh-add {{ item.dest }} 2>/dev/null || true
-    elif [ -f /tmp/ssh_auth_sock_{{ lookup('env', 'USER') }} ]; then
-      export SSH_AUTH_SOCK=$(cat /tmp/ssh_auth_sock_{{ lookup('env', 'USER') }})
-      ssh-add {{ item.dest }} 2>/dev/null || true
-    fi
-  become: false
-  loop: "{{ ssh_keys }}"
+- name: Set authorized keys for all users
+  ansible.builtin.authorized_key:
+    user: "{{ item.0.key }}"
+    state: present
+    key: "{{ lookup('file', item.1) }}"
+  loop: "{{ query('nested', eligible_users | default([]), local_public_keys | default([])) }}"
+  become: true
+  when:
+    - (eligible_users | default([])) | length > 0
+    - (local_public_keys | default([])) | length > 0
   tags:
     - dotfiles
     - install
